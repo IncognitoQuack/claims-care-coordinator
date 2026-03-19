@@ -1,0 +1,116 @@
+{
+  "patient_name": "James Okafor",
+  "patient_age": 58,
+  "patient_sex": "M",
+  "chief_complaint": "Exertional chest pain and progressive shortness of breath over 6 weeks",
+  "symptoms": [
+    "Exertional angina (chest tightness with walking >2 blocks, relieved by rest)",
+    "Progressive dyspnea on exertion (NYHA Class III)",
+    "Orthopnea (requires 3 pillows to sleep)",
+    "Paroxysmal nocturnal dyspnea (2-3 episodes/week)",
+    "Bilateral lower extremity pitting edema (2+)",
+    "Unintentional weight gain of 8 lbs in 3 weeks (fluid retention)",
+    "Fatigue and exercise intolerance",
+    "Intermittent palpitations"
+  ],
+  "labs": [
+    {
+      "name": "BNP (B-type Natriuretic Peptide)",
+      "value": "890",
+      "unit": "pg/mL",
+      "flag": "critical",
+      "reference_range": "<100 pg/mL"
+    },
+    {
+      "name": "Troponin-I (High Sensitivity)",
+      "value": "0.08",
+      "unit": "ng/mL",
+      "flag": "high",
+      "reference_range": "<0.04 ng/mL"
+    },
+    {
+      "name": "LDL Cholesterol",
+      "value": "188",
+      "unit": "mg/dL",
+      "flag": "high",
+      "reference_range": "<100 mg/dL"
+    },
+    {
+      "name": "HbA1c",
+      "value": "7.2",
+      "unit": "%",
+      "flag": "high",
+      "reference_range": "<5.7%"
+    },
+    {
+      "name": "Serum Creatinine",
+      "value": "1.6",
+      "unit": "mg/dL",
+      "flag": "high",
+      "reference_range": "0.7-1.3 mg/dL"
+    },
+    {
+      "name": "eGFR",
+      "value": "52",
+      "unit": "mL/min/1.73m²",
+      "flag": "high",
+      "reference_range": ">90 mL/min/1.73m²"
+    },
+    {
+      "name": "Potassium",
+      "value": "5.3",
+      "unit": "mEq/L",
+      "flag": "high",
+      "reference_range": "3.5-5.0 mEq/L"
+    },
+    {
+      "name": "Total Cholesterol",
+      "value": "262",
+      "unit": "mg/dL",
+      "flag": "high",
+      "reference_range": "<200 mg/dL"
+    }
+  ],
+  "diagnosis_codes": [
+    {
+      "code": "I50.9",
+      "system": "ICD-10-CM",
+      "description": "Heart failure, unspecified"
+    },
+    {
+      "code": "I25.10",
+      "system": "ICD-10-CM",
+      "description": "Atherosclerotic heart disease of native coronary artery without angina pectoris"
+    },
+    {
+      "code": "E11.65",
+      "system": "ICD-10-CM",
+      "description": "Type 2 diabetes mellitus with hyperglycemia"
+    },
+    {
+      "code": "N18.3",
+      "system": "ICD-10-CM",
+      "description": "Chronic kidney disease, stage 3"
+    },
+    {
+      "code": "I10",
+      "system": "ICD-10-CM",
+      "description": "Essential (primary) hypertension"
+    }
+  ],
+  "requested_procedure": {
+    "code": "93306",
+    "system": "CPT",
+    "name": "Transthoracic Echocardiogram (Complete, with Doppler)",
+    "reason": "Evaluate cardiac structure and function in setting of new heart failure symptoms with elevated BNP; assess for HFpEF vs HFrEF to guide treatment"
+  },
+  "prior_treatments": [
+    "Metformin 1000mg BID — for Type 2 DM, ongoing 4 years",
+    "Lisinopril 20mg daily — for hypertension, ongoing 6 years",
+    "Atorvastatin 40mg daily — for hyperlipidemia, ongoing 3 years",
+    "Aspirin 81mg daily",
+    "Furosemide 40mg daily — started 2 weeks ago for edema",
+    "Carvedilol 6.25mg BID — started 1 week ago (uptitrating)"
+  ],
+  "clinical_notes": "58-year-old male with multiple cardiovascular risk factors (Type 2 DM, HTN, hyperlipidemia, CKD stage 3) presenting with new-onset heart failure symptoms. BNP markedly elevated at 890 pg/mL confirming hemodynamic stress. Mildly elevated troponin suggests myocardial injury — could be demand ischemia or chronic elevation in the setting of HF and CKD. NYHA Class III symptoms with orthopnea and PND indicate significant functional limitation. Echocardiogram is essential and urgent to: (1) determine ejection fraction to classify HF type (HFrEF vs HFpEF), (2) evaluate for wall motion abnormalities suggesting CAD, (3) assess valvular pathology, (4) guide pharmacotherapy selection. Multiple concurrent comorbidities (DM + CKD + HTN + HF) make this a complex case requiring imaging-guided treatment decisions. Without echo, cannot safely uptitrate guideline-directed medical therapy."
+}

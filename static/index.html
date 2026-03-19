@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claims & Care Coordinator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  :root {
+    --bg: #0a0a0a; --surface: #0d0d0d; --border: #1a1a1a; --border-hover: #2a2a2a;
+    --text: #f0f0f0; --text-muted: #888; --text-dim: #555;
+    --green: #22c55e; --green-bg: #0f2a1f; --green-border: #22c55e40;
+    --purple: #818cf8; --purple-bg: #1a1a2e; --purple-border: #818cf840;
+    --amber: #f59e0b; --amber-bg: #2a1a0a; --amber-border: #f59e0b40;
+    --red: #ef4444; --blue: #3b82f6;
+    --font-body: 'Inter', -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-display: 'Outfit', sans-serif;
+  }
+
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+  
+  .grid-bg {
+    position: fixed; inset: 0; opacity: 0.03; pointer-events: none;
+    background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* ── Landing ──────────────────────────────────── */
+  .landing { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; position: relative; z-index: 1; }
+  .landing .glow-orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%); top: 15%; left: 50%; transform: translateX(-50%); pointer-events: none; }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .brand-icon { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--amber), #d97706); display: flex; align-items: center; justify-content: center; font-size: 22px; box-shadow: 0 0 30px rgba(245,158,11,0.25); }
+  .brand-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; color: var(--amber); font-weight: 700; }
+  
+  h1 { font-family: var(--font-display); font-size: clamp(36px, 5.5vw, 64px); font-weight: 800; text-align: center; line-height: 1.1; max-width: 700px; margin-bottom: 20px; letter-spacing: -0.02em; }
+  h1 .gradient { background: linear-gradient(135deg, var(--amber), #fbbf24, var(--amber)); background-size: 200% auto; animation: gradientMove 3s ease infinite; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .subtitle { font-size: 17px; color: var(--text-muted); max-width: 520px; text-align: center; line-height: 1.65; margin-bottom: 40px; font-weight: 300; }
+
+  .scenarios { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .scenario-btn { padding: 16px 28px; border-radius: 12px; border: 1px solid var(--border); background: #111; color: var(--text); cursor: pointer; font-family: var(--font-body); font-size: 14px; text-align: left; min-width: 260px; transition: all 0.3s ease; }
+  .scenario-btn:hover { border-color: var(--amber); background: #1a1400; }
+  .scenario-btn .label { font-size: 11px; color: var(--amber); font-weight: 700; margin-bottom: 6px; font-family: var(--font-mono); letter-spacing: 0.05em; }
+  .scenario-btn .name { font-weight: 600; margin-bottom: 4px; }
+  .scenario-btn .desc { font-size: 12px; color: #777; }
+  .scenario-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .stats-bar { display: flex; gap: 40px; margin-top: 60px; padding: 20px 40px; border-radius: 16px; border: 1px solid var(--border); background: var(--surface); }
+  .stat { text-align: center; }
+  .stat-val { font-size: 26px; font-weight: 800; font-family: var(--font-display); }
+  .stat-label { font-size: 11px; color: #666; margin-top: 2px; font-family: var(--font-mono); }
+
+  /* ── Main Layout ──────────────────────────────── */
+  .main { padding: 20px; max-width: 1400px; margin: 0 auto; animation: fadeIn 0.5s ease; display: none; }
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .header-icon { width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg, var(--amber), #d97706); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+  .header-title { font-family: var(--font-mono); font-size: 12px; color: var(--amber); font-weight: 700; letter-spacing: 0.1em; }
+  .status-dots { display: flex; align-items: center; gap: 16px; }
+  .status-dot { display: flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #333; transition: background 0.3s; }
+  .dot.active { animation: pulse 1.5s ease-in-out infinite; }
+  .dot-label { font-size: 11px; color: var(--text-dim); font-family: var(--font-mono); transition: color 0.3s; }
+  .back-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 12px; font-family: var(--font-mono); margin-left: 12px; }
+  .back-btn:hover { border-color: var(--text-dim); color: var(--text); }
+
+  .panels { display: grid; grid-template-columns: 300px 1fr 300px; gap: 16px; min-height: calc(100vh - 120px); }
+  .panel { background: var(--surface); border-radius: 14px; border: 1px solid var(--border); padding: 20px; overflow-y: auto; max-height: calc(100vh - 120px); }
+  .panel-title { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; margin-bottom: 16px; font-family: var(--font-mono); }
+  .panel-title.clinical { color: var(--green); }
+  .panel-title.ledger { color: var(--amber); }
+  .panel-title.policy { color: var(--purple); }
+
+  .patient-name { font-size: 18px; font-weight: 700; font-family: var(--font-display); }
+  .patient-complaint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; color: var(--text-dim); margin-bottom: 8px; margin-top: 16px; font-family: var(--font-mono); }
+
+  .tag { font-size: 11px; padding: 4px 8px; border-radius: 5px; display: inline-block; margin: 2px; font-family: var(--font-mono); }
+  .tag.green { background: #22c55e10; color: var(--green); border: 1px solid #22c55e30; }
+  .tag.purple { background: #818cf810; color: var(--purple); border: 1px solid #818cf830; }
+
+  .lab-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .lab-name { font-size: 12px; color: #aaa; }
+  .lab-value { font-size: 11px; font-family: var(--font-mono); font-weight: 600; }
+  .lab-value.critical { color: var(--red); }
+  .lab-value.high { color: var(--amber); }
+  .lab-value.normal { color: var(--green); }
+
+  .dx-code { font-size: 11px; font-family: var(--font-mono); color: var(--green); font-weight: 700; }
+  .dx-desc { font-size: 11px; color: #777; margin-top: 2px; }
+
+  .procedure-box { margin-top: 16px; padding: 12px; border-radius: 8px; background: #22c55e08; border: 1px solid #22c55e20; }
+  .procedure-name { font-size: 13px; font-weight: 600; }
+  .procedure-detail { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ── Ledger ───────────────────────────────────── */
+  #ledger-panel { transition: border-color 0.5s ease; }
+  #ledger-panel.glowing { border-color: var(--amber-border); animation: glow 2s ease-in-out infinite; }
+
+  .live-badge { font-size: 9px; padding: 2px 8px; border-radius: 4px; animation: pulse 2s ease infinite; margin-left: 8px; display: none; }
+  .live-badge.clinical { background: #22c55e18; color: var(--green); }
+  .live-badge.policy { background: #818cf818; color: var(--purple); }
+
+  .ledger-entry { padding: 14px 16px; border-radius: 10px; margin-bottom: 10px; animation: slideUp 0.4s ease-out; }
+  .ledger-entry.clinical { background: var(--green-bg); border: 1px solid var(--green-border); }
+  .ledger-entry.policy { background: var(--purple-bg); border: 1px solid var(--purple-border); }
+  .ledger-entry.ledger, .ledger-entry.system { background: var(--amber-bg); border: 1px solid var(--amber-border); }
+
+  .entry-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .entry-source { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; font-family: var(--font-mono); }
+  .entry-source.clinical { color: var(--green); }
+  .entry-source.policy { color: var(--purple); }
+  .entry-source.ledger, .entry-source.system { color: var(--amber); }
+  .entry-time { font-size: 10px; color: #666; font-family: var(--font-mono); }
+  .entry-message { font-size: 13.5px; color: #e0e0e0; line-height: 1.55; }
+  .entry-tags { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .entry-tag { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-family: var(--font-mono); font-weight: 600; }
+  .entry-tag.clinical { background: #22c55e18; color: var(--green); }
+  .entry-tag.policy { background: #818cf818; color: var(--purple); }
+  .entry-tag.ledger, .entry-tag.system { background: #f59e0b18; color: var(--amber); }
+
+  .loading-bar { height: 3px; border-radius: 2px; margin-top: 10px; background: linear-gradient(90deg, transparent, var(--purple), transparent); background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite; }
+
+  /* ── Outcome ──────────────────────────────────── */
+  .outcome { margin-top: 12px; animation: slideUp 0.5s ease-out; display: none; }
+  .determination { padding: 14px; border-radius: 10px; background: #0a1a0a; border: 1px solid #22c55e40; margin-bottom: 10px; }
+  .determination-label { font-size: 10px; color: var(--green); font-weight: 700; margin-bottom: 6px; font-family: var(--font-mono); letter-spacing: 0.08em; }
+  .determination-text { font-size: 12.5px; color: #d0d0d0; line-height: 1.6; }
+
+  .outcome-box { padding: 16px; border-radius: 10px; background: linear-gradient(135deg, #1a2a0a, #0a1a0a); border: 2px solid #22c55e60; }
+  .outcome-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .outcome-status { font-size: 16px; font-weight: 800; color: var(--green); font-family: var(--font-display); }
+  .outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .outcome-item-label { font-size: 9px; color: #666; font-family: var(--font-mono); letter-spacing: 0.08em; }
+  .outcome-item-value { font-size: 12px; color: #d0d0d0; font-weight: 500; margin-top: 2px; }
+
+  .outcome-box.denied { border-color: #ef444460; background: linear-gradient(135deg, #2a0a0a, #1a0505); }
+  .outcome-box.denied .outcome-status { color: var(--red); }
+  .outcome-box.pending { border-color: #f59e0b60; background: linear-gradient(135deg, #2a1a0a, #1a1005); }
+  .outcome-box.pending .outcome-status { color: var(--amber); }
+
+  /* ── Policy Panel ─────────────────────────────── */
+  .policy-section { padding: 12px; border-radius: 8px; margin-bottom: 10px; background: #111; border: 1px solid var(--border); transition: all 0.5s ease; }
+  .policy-section.matched { background: #818cf808; border-color: #818cf840; box-shadow: 0 0 15px rgba(129, 140, 248, 0.1); }
+  .policy-section-id { font-size: 10px; font-weight: 700; color: var(--purple); font-family: var(--font-mono); }
+  .policy-match-badge { font-size: 9px; padding: 2px 6px; border-radius: 3px; background: #818cf820; color: var(--purple); font-weight: 700; font-family: var(--font-mono); margin-left: 6px; }
+  .policy-text { font-size: 11.5px; color: #999; line-height: 1.55; margin-top: 6px; }
+
+  /* ── Scenario Switcher ────────────────────────── */
+  .scenario-switch { display: flex; gap: 10px; justify-content: center; padding: 20px 0; }
+  .switch-btn { padding: 8px 16px; border-radius: 8px; border: 1px solid #222; background: transparent; color: #666; cursor: pointer; font-size: 12px; font-family: var(--font-mono); transition: all 0.3s; }
+  .switch-btn.active { border-color: var(--amber); background: #f59e0b10; color: var(--amber); }
+  .switch-btn:hover { border-color: var(--text-dim); }
+  .switch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Upload section */
+  .upload-section { margin-top: 30px; text-align: center; }
+  .upload-or { color: var(--text-dim); font-size: 13px; margin-bottom: 16px; }
+  .upload-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .upload-btn { padding: 10px 20px; border-radius: 8px; border: 1px dashed var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-family: var(--font-mono); font-size: 12px; transition: all 0.3s; }
+  .upload-btn:hover { border-color: var(--amber); color: var(--amber); }
+  input[type=file] { display: none; }
+
+  /* ── Animations ───────────────────────────────── */
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+  @keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(245,158,11,0.15); } 50% { box-shadow: 0 0 40px rgba(245,158,11,0.3); } }
+  @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+  @media (max-width: 900px) {
+    .panels { grid-template-columns: 1fr; }
+    .panel { max-height: 50vh; }
+    .stats-bar { flex-wrap: wrap; gap: 20px; padding: 16px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- ═══════════ LANDING ═══════════ -->
+<div class="landing" id="landing">
+  <div class="glow-orb"></div>
+  <div class="brand">
+    <div class="brand-icon">⚕</div>
+    <span class="brand-label">CLAIMS & CARE COORDINATOR</span>
+  </div>
+  <h1>
+    <span>Two AI Agents.</span><br>
+    <span class="gradient">One Shared Brain.</span>
+  </h1>
+  <p class="subtitle">
+    Watch a Clinical Agent and Policy Agent collaborate through a shared 
+    Medical Necessity Ledger to auto-approve prior authorizations in seconds — not days.
+  </p>
+  <div class="scenarios" id="scenarios"></div>
+
+  <div class="upload-section">
+    <div class="upload-or">— or upload your own data —</div>
+    <div class="upload-row">
+      <label class="upload-btn">
+        📋 Upload EHR (JSON)
+        <input type="file" id="ehr-upload" accept=".json">
+      </label>
+      <label class="upload-btn">
+        📄 Upload Policy (TXT/PDF)
+        <input type="file" id="policy-upload" accept=".txt,.pdf">
+      </label>
+    </div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-val" style="color: var(--green)">40%</div><div class="stat-label">Avg. Denial Reduction</div></div>
+    <div class="stat"><div class="stat-val" style="color: var(--purple)">96%</div><div class="stat-label">Processing Time Saved</div></div>
+    <div class="stat"><div class="stat-val" style="color: var(--amber)">$2.7K</div><div class="stat-label">Admin Savings / Case</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ MAIN DEMO VIEW ═══════════ -->
+<div class="main" id="main">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-icon">⚕</div>
+      <span class="header-title">CLAIMS & CARE</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="status-dots">
+        <div class="status-dot">
+          <div class="dot" id="dot-clinical"></div>
+          <span class="dot-label" id="label-clinical">Clinical</span>
+        </div>
+        <div class="status-dot">
+          <div class="dot" id="dot-policy"></div>
+          <span class="dot-label" id="label-policy">Policy</span>
+        </div>
+      </div>
+      <button class="back-btn" onclick="showLanding()">← Back</button>
+    </div>
+  </div>
+
+  <div class="panels">
+    <!-- LEFT: Clinical Agent / EHR -->
+    <div class="panel" id="ehr-panel">
+      <div class="panel-title clinical">⬤ CLINICAL AGENT — EHR DATA</div>
+      <div id="ehr-content"></div>
+    </div>
+
+    <!-- CENTER: Ledger -->
+    <div class="panel" id="ledger-panel">
+      <div class="panel-title ledger" style="display:flex;align-items:center;">
+        ✦ MEDICAL NECESSITY LEDGER — SHARED MEMORY
+        <span class="live-badge clinical" id="live-badge">LIVE</span>
+      </div>
+      <div id="ledger-entries"></div>
+      <div class="outcome" id="outcome"></div>
+    </div>
+
+    <!-- RIGHT: Policy Agent -->
+    <div class="panel" id="policy-panel">
+      <div class="panel-title policy">⬤ POLICY AGENT — INSURANCE DATA</div>
+      <div id="policy-content">
+        <div style="color:#555; font-size:12px; font-family:var(--font-mono);">
+          Waiting for Clinical Agent to write to shared ledger...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-switch" id="scenario-switch"></div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────
+let currentScenario = null;
+let isProcessing = false;
+let samples = [];
+let policyText = '';
+let uploadedEHR = null;
+let uploadedPolicy = null;
+let startTime = null;
+
+const API_BASE = window.location.origin;
+
+// ─── Init ─────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/samples`);
+    const data = await resp.json();
+    samples = data.samples;
+    renderScenarios();
+  } catch(e) {
+    console.error('Failed to load samples:', e);
+    document.getElementById('scenarios').innerHTML = 
+      '<p style="color:var(--red);font-size:13px;">⚠ Cannot connect to backend. Make sure the server is running on port 8000.</p>';
+  }
+}
+
+function renderScenarios() {
+  const container = document.getElementById('scenarios');
+  container.innerHTML = samples.map((s, i) => `
+    <button class="scenario-btn" onclick="runScenario('${s.id}')" id="btn-${s.id}">
+      <div class="label">SCENARIO ${i+1}</div>
+      <div class="name">${s.patient_name}</div>
+      <div class="desc">${s.chief_complaint}</div>
+    </button>
+  `).join('');
+}
+
+// ─── File Uploads ─────────────────────────────────────────────────
+document.getElementById('ehr-upload')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    uploadedEHR = JSON.parse(text);
+    e.target.closest('.upload-btn').style.borderColor = 'var(--green)';
+    e.target.closest('.upload-btn').style.color = 'var(--green)';
+    e.target.closest('.upload-btn').textContent = `✓ ${file.name}`;
+    checkCustomUpload();
+  } catch(err) {
+    alert('Invalid JSON file. Please upload a valid EHR JSON.');
+  }
+});
+
+document.getElementById('policy-upload')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  uploadedPolicy = text;
+  e.target.closest('.upload-btn').style.borderColor = 'var(--green)';
+  e.target.closest('.upload-btn').style.color = 'var(--green)';
+  e.target.closest('.upload-btn').textContent = `✓ ${file.name}`;
+  checkCustomUpload();
+});
+
+function checkCustomUpload() {
+  if (uploadedEHR && uploadedPolicy) {
+    runCustom();
+  }
+}
+
+async function runCustom() {
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+  
+  renderEHRPanel(uploadedEHR);
+  startProcess({
+    ehr_data: uploadedEHR,
+    policy_document: uploadedPolicy,
+    plan_name: "Custom Policy",
+    member_id: "CUSTOM-001",
+  });
+}
+
+// ─── Run Scenario ─────────────────────────────────────────────────
+async function runScenario(id) {
+  if (isProcessing) return;
+  currentScenario = id;
+
+  // Load sample data
+  const resp = await fetch(`${API_BASE}/api/sample/${id}`);
+  const data = await resp.json();
+  
+  // Load full policy
+  const policyResp = await fetch(`${API_BASE}/api/sample/${id}`);
+  const policyData = await policyResp.json();
+
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('main').style.display = 'block';
+
+  renderEHRPanel(data.ehr);
+  renderScenarioSwitcher();
+
+  // Fetch full policy text for the request
+  const fullPolicyResp = await fetch(`${API_BASE}/api/samples`);
+  
+  startProcess({
+    ehr_data: data.ehr,
+    policy_document: await loadFullPolicy(),
+    plan_name: "ACME Health Insurance Platinum PPO",
+    member_id: "ACME-" + Math.random().toString(36).substr(2, 7).toUpperCase(),
+  });
+}
+
+async function loadFullPolicy() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/policy`);
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.text;
+    }
+  } catch(e) {}
+  // Fallback
+  const id = currentScenario || (samples[0]?.id);
+  if (!id) return "Policy document not available";
+  const resp = await fetch(`${API_BASE}/api/sample/${id}`);
+  const data = await resp.json();
+  return data.policy_text || "Policy document not available";
+}
+
+// ─── Process Claim via SSE ────────────────────────────────────────
+async function startProcess(payload) {
+  isProcessing = true;
+  startTime = Date.now();
+  
+  // Clear previous state
+  document.getElementById('ledger-entries').innerHTML = '';
+  document.getElementById('outcome').style.display = 'none';
+  document.getElementById('outcome').innerHTML = '';
+  document.getElementById('policy-content').innerHTML = 
+    '<div style="color:#555;font-size:12px;font-family:var(--font-mono);">Waiting for Clinical Agent to write to shared ledger...</div>';
+  
+  setPhase('idle');
+
+  try {
+    const response = await fetch(`${API_BASE}/api/process`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const eventData = JSON.parse(line.slice(6));
+            handleSSEEvent(eventData);
+          } catch(e) {}
+        } else if (line.startsWith('event: result')) {
+          // Next data line has the full result
+        } else if (line.startsWith('event: done')) {
+          isProcessing = false;
+        }
+      }
+    }
+  } catch (e) {
+    console.error('SSE Error:', e);
+    addLedgerEntry({
+      source: 'system',
+      event_type: 'ERROR',
+      message: `Connection error: ${e.message}. Make sure the backend is running.`,
+      tags: ['ERROR'],
+      severity: 'critical',
+    });
+  }
+  isProcessing = false;
+}
+
+// ─── Handle SSE Events ───────────────────────────────────────────
+function handleSSEEvent(event) {
+  // Update phase based on event
+  if (event.event_type === 'PHASE_CHANGE') {
+    const phase = event.data?.phase || 'idle';
+    setPhase(phase);
+  }
+
+  // Add to ledger
+  addLedgerEntry(event);
+
+  // Update policy panel on policy events
+  if (event.source === 'policy' && event.event_type === 'SECTION_MATCH') {
+    addPolicyMatch(event);
+  }
+
+  // Show outcome on completion
+  if (event.event_type === 'PROCESS_COMPLETE') {
+    showOutcome(event.data);
+  }
+}
+
+function setPhase(phase) {
+  const dotClinical = document.getElementById('dot-clinical');
+  const dotPolicy = document.getElementById('dot-policy');
+  const labelClinical = document.getElementById('label-clinical');
+  const labelPolicy = document.getElementById('label-policy');
+  const badge = document.getElementById('live-badge');
+  const ledgerPanel = document.getElementById('ledger-panel');
+
+  dotClinical.className = 'dot';
+  dotPolicy.className = 'dot';
+  labelClinical.style.color = 'var(--text-dim)';
+  labelPolicy.style.color = 'var(--text-dim)';
+  badge.style.display = 'none';
+  ledgerPanel.classList.remove('glowing');
+
+  if (phase === 'clinical') {
+    dotClinical.className = 'dot active';
+    dotClinical.style.background = 'var(--green)';
+    labelClinical.style.color = 'var(--green)';
+    badge.className = 'live-badge clinical';
+    badge.style.display = 'inline';
+    ledgerPanel.classList.add('glowing');
+  } else if (phase === 'policy') {
+    dotPolicy.className = 'dot active';
+    dotPolicy.style.background = 'var(--purple)';
+    labelPolicy.style.color = 'var(--purple)';
+    badge.className = 'live-badge policy';
+    badge.style.display = 'inline';
+  } else if (phase === 'resolution') {
+    dotClinical.style.background = 'var(--green)';
+    dotPolicy.style.background = 'var(--purple)';
+    labelClinical.style.color = 'var(--green)';
+    labelPolicy.style.color = 'var(--purple)';
+  }
+}
+
+function getElapsedTime() {
+  if (!startTime) return '00:00.000';
+  const ms = Date.now() - startTime;
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const remainder = ms % 1000;
+  return `${String(m).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}.${String(remainder).padStart(3,'0')}`;
+}
+
+function addLedgerEntry(event) {
+  const container = document.getElementById('ledger-entries');
+  const source = event.source || 'system';
+  const sourceLabels = { clinical: 'CLINICAL AGENT', policy: 'POLICY AGENT', ledger: 'SHARED LEDGER', system: 'SYSTEM' };
+
+  const entry = document.createElement('div');
+  entry.className = `ledger-entry ${source}`;
+  
+  let tagsHTML = '';
+  if (event.tags && event.tags.length) {
+    tagsHTML = `<div class="entry-tags">${event.tags.map(t => 
+      `<span class="entry-tag ${source}">${t}</span>`
+    ).join('')}</div>`;
+  }
+
+  entry.innerHTML = `
+    <div class="entry-header">
+      <span class="entry-source ${source}">${sourceLabels[source] || source.toUpperCase()}</span>
+      <span class="entry-time">${getElapsedTime()}</span>
+    </div>
+    <div class="entry-message">${escapeHtml(event.message)}</div>
+    ${tagsHTML}
+  `;
+  container.appendChild(entry);
+  container.scrollTop = container.scrollHeight;
+}
+
+function addPolicyMatch(event) {
+  const container = document.getElementById('policy-content');
+  
+  // Remove "waiting" message
+  if (container.querySelector('div[style]')) {
+    container.innerHTML = '';
+  }
+
+  const section = document.createElement('div');
+  const isException = event.data?.is_exception;
+  section.className = `policy-section ${isException ? 'matched' : ''}`;
+
+  section.innerHTML = `
+    <div style="display:flex;align-items:center;">
+      <span class="policy-section-id">§${escapeHtml(event.data?.section_id || '?')}</span>
+      ${isException ? '<span class="policy-match-badge">EXCEPTION</span>' : ''}
+      ${event.data?.relevance_score ? `<span style="margin-left:auto;font-size:10px;color:var(--purple);font-family:var(--font-mono);">${Math.round(event.data.relevance_score * 100)}% match</span>` : ''}
+    </div>
+    <div class="policy-text">${escapeHtml(event.data?.text_preview || event.message)}</div>
+  `;
+  container.appendChild(section);
+}
+
+function showOutcome(data) {
+  const outcomeEl = document.getElementById('outcome');
+  const det = data?.determination || data;
+  
+  if (!det) return;
+
+  const status = det.status || det.expected_status || 'PENDING';
+  const statusClass = status.includes('APPROVED') ? '' : status.includes('DENIED') ? 'denied' : 'pending';
+  const statusIcon = status.includes('APPROVED') ? '✓' : status.includes('DENIED') ? '✗' : '⏳';
+
+  outcomeEl.innerHTML = `
+    ${det.determination_text ? `
+    <div class="determination">
+      <div class="determination-label">AI DETERMINATION</div>
+      <div class="determination-text">${escapeHtml(det.determination_text)}</div>
+    </div>` : ''}
+    <div class="outcome-box ${statusClass}">
+      <div class="outcome-header">
+        <span style="font-size:22px">${statusIcon}</span>
+        <span class="outcome-status">${status}</span>
+      </div>
+      <div class="outcome-grid">
+        <div><div class="outcome-item-label">PATHWAY</div><div class="outcome-item-value">${escapeHtml(det.pathway || det.recommended_pathway || 'Standard Review')}</div></div>
+        <div><div class="outcome-item-label">PROCESSING TIME</div><div class="outcome-item-value">${escapeHtml(det.estimated_processing_time || 'N/A')}</div></div>
+        <div><div class="outcome-item-label">CONFIDENCE</div><div class="outcome-item-value">${det.confidence_score ? Math.round(det.confidence_score * 100) + '%' : 'N/A'}</div></div>
+        <div><div class="outcome-item-label">ADMIN SAVINGS</div><div class="outcome-item-value">${escapeHtml(det.admin_cost_savings || 'N/A')}</div></div>
+      </div>
+    </div>
+  `;
+  outcomeEl.style.display = 'block';
+}
+
+// ─── Render EHR Panel ────────────────────────────────────────────
+function renderEHRPanel(ehr) {
+  const container = document.getElementById('ehr-content');
+  
+  const symptomsHTML = (ehr.symptoms || []).map(s => 
+    `<span class="tag green">${escapeHtml(typeof s === 'string' ? s : s.name || s)}</span>`
+  ).join('');
+
+  const labsHTML = (ehr.labs || []).map(lab => {
+    const flag = lab.flag || 'normal';
+    return `<div class="lab-row">
+      <span class="lab-name">${escapeHtml(lab.name)}</span>
+      <span class="lab-value ${flag}">${escapeHtml(lab.value)}${lab.unit ? ' ' + escapeHtml(lab.unit) : ''}</span>
+    </div>`;
+  }).join('');
+
+  const dxHTML = (ehr.diagnosis_codes || []).map(dx => `
+    <div style="margin-bottom:8px;">
+      <span class="dx-code">${escapeHtml(dx.code)}</span>
+      <div class="dx-desc">${escapeHtml(dx.description)}</div>
+    </div>
+  `).join('');
+
+  const proc = ehr.requested_procedure;
+  const procHTML = proc ? `
+    <div class="procedure-box">
+      <div class="section-label">REQUESTED PROCEDURE</div>
+      <div class="procedure-name">${escapeHtml(proc.name)}</div>
+      <div class="procedure-detail">${escapeHtml(proc.code)} (${escapeHtml(proc.system || 'CPT')}) — ${escapeHtml(proc.reason)}</div>
+    </div>` : '';
+
+  container.innerHTML = `
+    <div style="margin-bottom:20px;">
+      <div class="patient-name">${escapeHtml(ehr.patient_name)}, ${ehr.patient_age}${escapeHtml(ehr.patient_sex)}</div>
+      <div class="patient-complaint">${escapeHtml(ehr.chief_complaint)}</div>
+    </div>
+    <div class="section-label" style="margin-top:0">SYMPTOMS</div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px;">${symptomsHTML}</div>
+    <div class="section-label">LAB RESULTS</div>
+    ${labsHTML}
+    <div class="section-label">DIAGNOSIS CODES</div>
+    ${dxHTML}
+    ${procHTML}
+    ${ehr.prior_treatments?.length ? `
+      <div class="section-label">PRIOR TREATMENTS</div>
+      ${ehr.prior_treatments.map(t => `<div style="font-size:11px;color:#777;margin-bottom:4px;">• ${escapeHtml(t)}</div>`).join('')}
+    ` : ''}
+  `;
+}
+
+function renderScenarioSwitcher() {
+  const container = document.getElementById('scenario-switch');
+  container.innerHTML = samples.map((s, i) => `
+    <button class="switch-btn ${s.id === currentScenario ? 'active' : ''}" 
+            onclick="runScenario('${s.id}')" ${isProcessing ? 'disabled' : ''}>
+      Scenario ${i+1}: ${s.patient_name.split(',')[0]}
+    </button>
+  `).join('');
+}
+
+function showLanding() {
+  document.getElementById('landing').style.display = 'flex';
+  document.getElementById('main').style.display = 'none';
+  currentScenario = null;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+// ─── Boot ──────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

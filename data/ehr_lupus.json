@@ -1,0 +1,132 @@
+{
+  "patient_name": "Maria Chen",
+  "patient_age": 42,
+  "patient_sex": "F",
+  "chief_complaint": "Progressive joint pain, chronic fatigue, and butterfly-shaped facial rash worsening over 3 months",
+  "symptoms": [
+    "Bilateral polyarthralgia affecting MCPs, PIPs, wrists, and knees",
+    "Chronic fatigue unresponsive to rest",
+    "Malar (butterfly) rash across nose and cheeks",
+    "Photosensitivity with rash exacerbation on sun exposure",
+    "Recurrent oral ulcers (painless, on hard palate)",
+    "Morning stiffness lasting >1 hour",
+    "Intermittent low-grade fever (99.5-100.2°F)",
+    "New onset peripheral edema (bilateral lower extremities)",
+    "Decreased urine output noted over past 2 weeks"
+  ],
+  "labs": [
+    {
+      "name": "ANA (Antinuclear Antibody)",
+      "value": "1:640",
+      "unit": "titer",
+      "flag": "critical",
+      "reference_range": "<1:40"
+    },
+    {
+      "name": "Anti-dsDNA Antibody",
+      "value": "85",
+      "unit": "IU/mL",
+      "flag": "critical",
+      "reference_range": "<30 IU/mL"
+    },
+    {
+      "name": "C3 Complement",
+      "value": "48",
+      "unit": "mg/dL",
+      "flag": "critical",
+      "reference_range": "90-180 mg/dL"
+    },
+    {
+      "name": "C4 Complement",
+      "value": "8",
+      "unit": "mg/dL",
+      "flag": "high",
+      "reference_range": "10-40 mg/dL"
+    },
+    {
+      "name": "ESR",
+      "value": "62",
+      "unit": "mm/hr",
+      "flag": "high",
+      "reference_range": "0-20 mm/hr"
+    },
+    {
+      "name": "CRP",
+      "value": "3.8",
+      "unit": "mg/dL",
+      "flag": "high",
+      "reference_range": "<0.5 mg/dL"
+    },
+    {
+      "name": "CBC - WBC",
+      "value": "3.2",
+      "unit": "x10³/µL",
+      "flag": "high",
+      "reference_range": "4.5-11.0 x10³/µL"
+    },
+    {
+      "name": "Urinalysis - Protein",
+      "value": "2+",
+      "unit": "",
+      "flag": "high",
+      "reference_range": "Negative"
+    },
+    {
+      "name": "Urine Protein/Creatinine Ratio",
+      "value": "1.8",
+      "unit": "mg/mg",
+      "flag": "critical",
+      "reference_range": "<0.2 mg/mg"
+    },
+    {
+      "name": "Serum Creatinine",
+      "value": "1.4",
+      "unit": "mg/dL",
+      "flag": "high",
+      "reference_range": "0.6-1.1 mg/dL"
+    },
+    {
+      "name": "eGFR",
+      "value": "58",
+      "unit": "mL/min/1.73m²",
+      "flag": "high",
+      "reference_range": ">90 mL/min/1.73m²"
+    }
+  ],
+  "diagnosis_codes": [
+    {
+      "code": "M32.14",
+      "system": "ICD-10-CM",
+      "description": "Glomerular disease in systemic lupus erythematosus"
+    },
+    {
+      "code": "M32.10",
+      "system": "ICD-10-CM",
+      "description": "Systemic lupus erythematosus, organ or system involvement unspecified"
+    },
+    {
+      "code": "N04.9",
+      "system": "ICD-10-CM",
+      "description": "Nephrotic syndrome with unspecified morphologic changes"
+    },
+    {
+      "code": "L93.0",
+      "system": "ICD-10-CM",
+      "description": "Discoid lupus erythematosus"
+    }
+  ],
+  "requested_procedure": {
+    "code": "76770",
+    "system": "CPT",
+    "name": "Renal Ultrasound (Complete, with Doppler)",
+    "reason": "Evaluate renal parenchyma and vascularity in setting of suspected lupus nephritis progression with rising creatinine and proteinuria"
+  },
+  "prior_treatments": [
+    "Hydroxychloroquine (Plaquenil) 400mg daily — ongoing for 6 months",
+    "Prednisone taper (60mg → 10mg over 8 weeks) — completed 1 month ago",
+    "Naproxen 500mg BID PRN — for joint pain",
+    "Folic acid 1mg daily",
+    "Vitamin D3 2000 IU daily"
+  ],
+  "clinical_notes": "42-year-old female with established SLE (diagnosed 8 months ago, meeting 6/11 ACR classification criteria) presenting with signs of disease flare and new renal involvement. ANA persistently positive at high titer with positive anti-dsDNA confirming active disease. Complement levels are consumed (low C3 and C4) indicating active immune complex-mediated disease. New finding of significant proteinuria (UPC 1.8) with rising creatinine suggests lupus nephritis — Class III or IV cannot be excluded without further workup. Renal ultrasound is the essential first step before potential renal biopsy to evaluate kidney size, echogenicity, and vascular flow. This is time-sensitive given concern for rapidly progressive glomerulonephritis. Patient has been compliant with hydroxychloroquine but disease has progressed despite therapy, supporting need for urgent evaluation and likely escalation to mycophenolate or cyclophosphamide."
+}

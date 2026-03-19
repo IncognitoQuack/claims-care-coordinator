@@ -1,0 +1,209 @@
+ACME HEALTH INSURANCE — COMPREHENSIVE MEDICAL POLICY
+POLICY YEAR 2024-2025
+Document Version 4.2 | Effective: January 1, 2024
+
+================================================================
+SECTION 1: GENERAL PROVISIONS
+================================================================
+
+§1.1 — Scope of Coverage
+This policy provides coverage for medically necessary diagnostic, therapeutic, and preventive services as defined herein. All services require evaluation against the Appropriate Use Criteria (AUC) and medical necessity standards outlined in this document.
+
+§1.2 — Definitions
+"Medically Necessary" — Services that are: (a) consistent with the diagnosis and treatment of a condition; (b) in accordance with standards of good medical practice; (c) not primarily for the convenience of the patient or provider; (d) the most appropriate supply or level of service that can safely be provided.
+
+"Prior Authorization" — A requirement that the provider obtain approval before rendering specified services. Failure to obtain prior authorization may result in claim denial.
+
+"Exception Clause" — Specific clinical circumstances under which standard utilization review requirements are modified or waived, as detailed in disease-specific sections of this policy.
+
+§1.3 — Prior Authorization Requirements
+The following services require prior authorization unless otherwise specified in disease-specific exception clauses:
+- Advanced diagnostic imaging (MRI, CT, PET, Nuclear Medicine)
+- Diagnostic ultrasound when ordered outside of standard screening protocols
+- Surgical procedures (elective and semi-elective)
+- Specialty pharmaceuticals and biologics
+- Durable medical equipment exceeding $500
+
+Standard prior authorization processing time: 5-7 business days.
+Expedited review (medical urgency): 24-72 hours upon physician attestation.
+
+================================================================
+SECTION 2: PREVENTIVE SERVICES
+================================================================
+
+§2.1 — Annual Wellness Examinations
+Covered at 100% with no prior authorization. Includes age-appropriate screening per USPSTF recommendations.
+
+§2.2 — Cancer Screening
+Mammography, colonoscopy, and PSA screening covered per ACS guidelines without prior authorization.
+
+================================================================
+SECTION 3: CARDIAC SERVICES
+================================================================
+
+§3.1 — Cardiac Diagnostic Imaging
+§3.1.1 — Echocardiography (CPT 93303-93350)
+Transthoracic echocardiography (TTE) requires prior authorization. Requests are evaluated against the American College of Cardiology (ACC) Appropriate Use Criteria. Standard processing: 5-7 business days.
+
+Indications rated as "Appropriate" under ACC AUC:
+- Symptoms or signs of heart failure
+- Known or suspected valvular disease
+- Evaluation of cardiac structure in setting of arrhythmia
+- Pre-operative cardiac risk assessment (major non-cardiac surgery)
+
+§3.1.2 — Stress Testing and Nuclear Cardiology
+Requires prior authorization. Must document failed conservative management or high pre-test probability per ACC/AHA guidelines.
+
+§3.1.3 — Cardiac MRI
+Requires prior authorization and peer-to-peer review with board-certified cardiologist.
+
+§3.1.4 — Heart Failure Expedited Pathway
+For patients presenting with clinical evidence of heart failure, the following expedited authorization pathway applies:
+
+(a) BNP Threshold Trigger: When BNP exceeds 400 pg/mL OR NT-proBNP exceeds 900 pg/mL, echocardiography is authorized under the EXPEDITED MEDICAL NECESSITY pathway. Standard AUC review is WAIVED. Authorization is granted within 4 hours of electronic submission.
+
+(b) Clinical Decompensation Trigger: When the treating physician attests to two or more of the following: orthopnea, paroxysmal nocturnal dyspnea, peripheral edema, and jugular venous distension, echocardiography is authorized under expedited pathway regardless of BNP level.
+
+(c) Multi-Morbidity Clause: When cardiac evaluation is requested for patients with TWO OR MORE concurrent chronic conditions from the following list — diabetes mellitus, chronic kidney disease (eGFR <60), hypertension, atrial fibrillation, peripheral arterial disease — the MULTI-MORBIDITY FAST-TRACK applies. Authorization is granted within 4 hours with electronic submission. The rationale: multi-morbid patients have higher risk of rapid decompensation and delayed imaging may result in preventable hospitalizations.
+
+§3.1.5 — Documentation Requirements for §3.1.4
+Claims submitted under the Heart Failure Expedited Pathway must include:
+- Completed Form PA-CARDIAC-EXP
+- BNP or NT-proBNP value dated within 7 days (for pathway a)
+- Clinical attestation form with symptom checklist (for pathway b)
+- Problem list documenting concurrent conditions (for pathway c)
+- ICD-10 diagnosis code from I50.x series
+
+§3.2 — Cardiac Catheterization and Interventional Procedures
+Requires prior authorization and peer-to-peer review. Emergency catheterization for STEMI is exempt from prior authorization.
+
+================================================================
+SECTION 4: DIAGNOSTIC IMAGING — GENERAL
+================================================================
+
+§4.1 — Standard Diagnostic Imaging
+X-rays and basic ultrasound for musculoskeletal evaluation do not require prior authorization.
+
+§4.2 — Advanced Diagnostic Imaging
+§4.2.1 — Ultrasound (Non-Obstetric)
+Diagnostic ultrasound (CPT 76700-76999) requires prior authorization when:
+- Ordered outside of annual wellness examination
+- Ordered for evaluation of chronic conditions
+- Multiple anatomic sites are requested simultaneously
+
+Standard processing time: 5-7 business days.
+
+§4.2.1(b) — Expedited Ultrasound Review
+Expedited authorization (24-48 hours) is available when clinical documentation demonstrates:
+- Acute symptom onset within the prior 14 days, OR
+- Active autoimmune disease with end-organ involvement confirmed by laboratory markers, OR
+- Suspected malignancy based on clinical findings, OR
+- Post-surgical complication evaluation within 30 days of procedure
+
+§4.2.2 — CT Imaging
+Requires prior authorization. Evaluated against ACR Appropriateness Criteria.
+
+§4.2.3 — MRI
+Requires prior authorization. See disease-specific exceptions in Sections 5-8.
+
+================================================================
+SECTION 5: ONCOLOGIC SERVICES
+================================================================
+
+§5.1 — Oncologic Imaging Exception
+For patients with confirmed malignancy (active treatment or surveillance), diagnostic imaging is classified as MEDICALLY NECESSARY and exempt from standard AUC review when ordered by the treating oncologist. Annual imaging caps do not apply.
+
+================================================================
+SECTION 6: NEUROLOGIC SERVICES
+================================================================
+
+§6.1 — Neuroimaging
+MRI of the brain and spine requires prior authorization. Exception: acute neurologic deficit (stroke symptoms, new seizure, acute radiculopathy) — emergent imaging is authorized retrospectively.
+
+================================================================
+SECTION 7: AUTOIMMUNE AND RHEUMATOLOGIC CONDITIONS
+================================================================
+
+§7.1 — General Provisions
+Patients with confirmed autoimmune conditions require ongoing monitoring and may require frequent diagnostic evaluation. This section provides modified authorization pathways for autoimmune disease management.
+
+§7.2 — Biologic and Immunosuppressive Therapy
+Prior authorization required for all biologic agents (adalimumab, rituximab, belimumab, etc.). Step therapy requirements apply unless documented intolerance or contraindication to first-line agents.
+
+§7.3 — Autoimmune Disease Diagnostic Exception
+For patients with CONFIRMED autoimmune disease meeting the following criteria, diagnostic imaging and laboratory testing to assess organ involvement is classified as MEDICALLY NECESSARY and EXEMPT from standard utilization review:
+
+QUALIFYING CRITERIA (ALL must be met):
+(a) Serologic confirmation: ANA titer ≥1:320 with at least one confirmatory antibody (anti-dsDNA, anti-Smith, anti-RNP, anti-SSA/SSB, anti-phospholipid antibodies);
+(b) Clinical confirmation: Two or more ACR/EULAR classification criteria for the specific autoimmune condition are documented in the medical record;
+(c) Evidence of active disease: At least one of the following — elevated ESR (>40 mm/hr), elevated CRP (>1.0 mg/dL), low complement levels (C3 <90 mg/dL or C4 <10 mg/dL), active urinary sediment, or cytopenias attributable to autoimmune disease;
+(d) Ordering provider: Imaging must be ordered by the treating rheumatologist, nephrologist, or dermatologist, OR by a primary care physician with documented rheumatology consultation within 90 days.
+
+When ALL four criteria above are met:
+- Diagnostic imaging (ultrasound, CT, MRI) for evaluation of organ involvement is AUTOMATICALLY APPROVED without utilization review
+- Laboratory testing related to disease monitoring is AUTOMATICALLY APPROVED
+- Authorization is INSTANT upon electronic submission with complete documentation
+- Annual imaging frequency caps do NOT apply
+- Results do not trigger future prior authorization escalation
+
+§7.3.1 — Lupus Nephritis Specific Provisions
+For patients with SLE and suspected or confirmed lupus nephritis (ICD-10 M32.14, M32.15):
+- Renal ultrasound is classified as URGENT and authorized within 24 hours
+- Renal biopsy is authorized under expedited pathway (48 hours) when proteinuria exceeds 500 mg/day or urine protein/creatinine ratio exceeds 0.5
+- Follow-up imaging at 3, 6, and 12-month intervals is pre-authorized upon initial approval
+- Cross-sectional imaging (CT or MRI) of kidneys is authorized without additional review if ultrasound findings are abnormal
+
+§7.3.2 — Documentation Requirements for §7.3 Exception
+Claims submitted under the Autoimmune Disease Diagnostic Exception must include:
+- Confirmed autoimmune diagnosis code (M32.xx for SLE, M05.xx-M06.xx for RA, M34.xx for scleroderma, etc.)
+- Laboratory values dated within 30 days demonstrating active disease
+- Treating physician attestation of medical necessity (Form PA-7.3)
+- Documentation of ACR/EULAR criteria met (may reference clinic notes)
+- For lupus nephritis claims: urinalysis and protein quantification within 14 days
+
+§7.4 — Rheumatoid Arthritis Provisions
+[Section continues with RA-specific pathways...]
+
+================================================================
+SECTION 8: RENAL AND UROLOGIC SERVICES
+================================================================
+
+§8.1 — Renal Imaging
+Renal ultrasound (CPT 76770, 76775) requires prior authorization for chronic conditions. Exception: acute renal failure, suspected obstruction, or trauma — imaging is authorized retrospectively.
+
+§8.2 — Renal Biopsy
+Requires prior authorization and nephrology consultation documentation. See §7.3.1 for autoimmune-related renal biopsy provisions.
+
+================================================================
+SECTION 9: UTILIZATION MANAGEMENT
+================================================================
+
+§9.1 — Annual Imaging Caps
+Members are subject to the following annual limits for diagnostic imaging, unless a disease-specific exception applies:
+- Ultrasound: 6 studies per calendar year
+- CT: 4 studies per calendar year
+- MRI: 3 studies per calendar year
+Studies authorized under disease-specific exception clauses (Sections 5-8) do NOT count toward annual caps.
+
+§9.2 — Concurrent Review Waiver
+Procedures approved under expedited pathways (§3.1.4, §4.2.1(b), §7.3) are exempt from concurrent utilization review and do not count toward annual imaging caps.
+
+§9.3 — Retrospective Review
+Services rendered without required prior authorization may be reviewed retrospectively. Medical necessity determination applies the same criteria as prospective review.
+
+§9.4 — Peer-to-Peer Review
+When prior authorization is denied, the ordering physician may request a peer-to-peer review with a board-certified physician in the relevant specialty. Peer-to-peer review must be completed within 5 business days of request.
+
+================================================================
+SECTION 10: APPEALS AND GRIEVANCES
+================================================================
+
+§10.1 — First-Level Appeal
+Members or providers may appeal a denied authorization within 180 days. Written appeal must include additional clinical documentation supporting medical necessity.
+
+§10.2 — External Review
+If the first-level appeal is upheld, members may request an independent external review by a certified independent review organization (IRO) as required by state law.
+
+================================================================
+END OF POLICY DOCUMENT
+================================================================
