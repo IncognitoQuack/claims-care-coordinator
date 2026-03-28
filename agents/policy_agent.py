@@ -14,7 +14,10 @@ This is the shared memory USP in action.
 """
 
 import json
-from anthropic import AsyncAnthropic
+import re
+from typing import Any, Dict, List
+
+from openai import AsyncOpenAI
 from models.schemas import AgentSource, Severity, PolicySection
 from memory.ledger import MedicalNecessityLedger
 
@@ -37,16 +40,16 @@ You must respond in valid JSON format only. No markdown, no explanation outside 
 
 
 class PolicyAgent:
-    def __init__(self, client: AsyncAnthropic, ledger: MedicalNecessityLedger):
+    def __init__(self, client: AsyncOpenAI, ledger: MedicalNecessityLedger):
         self.client = client
         self.ledger = ledger
-        self.model = "claude-sonnet-4-20250514"
+        self.model = "nvidia/nemotron-3-super-120b-a12b:free"
 
     async def analyze_policy(self, policy_text: str, plan_name: str) -> dict:
         """
         Main entry point: read the ledger, then search the policy accordingly.
+        Always returns a valid object so the coordinator does not crash.
         """
-        # Step 1: Read the shared ledger to understand clinical context
         clinical_context = await self.ledger.get_clinical_context()
         search_hints = await self.ledger.get_context("policy_search_hints") or []
         exception_indicators = await self.ledger.get_context("exception_indicators") or []
@@ -58,7 +61,7 @@ class PolicyAgent:
             message=(
                 f"Reading shared ledger. Clinical necessity: {necessity_level}. "
                 f"Adapting search parameters based on {len(search_hints)} clinical hint(s): "
-                f"{'; '.join(search_hints[:3])}."
+                f"{'; '.join(search_hints[:3]) if search_hints else 'none'}."
             ),
             data={
                 "necessity_level": necessity_level,
@@ -68,28 +71,25 @@ class PolicyAgent:
             tags=["LEDGER_READ", "SEARCH_ADAPTED"],
         )
 
-        # Step 2: Search policy for relevant sections
         matched_sections = await self._search_policy(
             policy_text, clinical_context, search_hints, exception_indicators
         )
 
-        # Step 3: Deep analysis of exception clauses
         exception_analysis = await self._analyze_exceptions(
             policy_text, clinical_context, matched_sections, exception_indicators
         )
 
-        # Step 4: Determine authorization pathway
         auth_pathway = await self._determine_pathway(
             clinical_context, matched_sections, exception_analysis
         )
 
-        # Step 5: Write final policy findings to ledger
         await self.ledger.write(
             source=AgentSource.LEDGER,
             event_type="POLICY_CONTEXT_COMPLETE",
             message=(
-                f"Policy analysis complete. Authorization pathway: {auth_pathway.get('recommended_pathway', 'UNKNOWN')}. "
-                f"Status: {auth_pathway.get('expected_status', 'PENDING')}. "
+                f"Policy analysis complete. Authorization pathway: "
+                f"{auth_pathway.get('recommended_pathway', 'PENDING_MANUAL_REVIEW')}. "
+                f"Status: {auth_pathway.get('expected_status', 'PENDING_MANUAL_REVIEW')}. "
                 f"Exception clauses found: {len(exception_analysis.get('applicable_exceptions', []))}."
             ),
             data={
@@ -97,7 +97,11 @@ class PolicyAgent:
                 "exceptions": exception_analysis,
                 "matched_sections_count": len(matched_sections),
             },
-            tags=["LEDGER_WRITE", "POLICY_COMPLETE", auth_pathway.get("expected_status", "PENDING")],
+            tags=[
+                "LEDGER_WRITE",
+                "POLICY_COMPLETE",
+                auth_pathway.get("expected_status", "PENDING_MANUAL_REVIEW"),
+            ],
             severity=Severity.CRITICAL,
         )
 
@@ -107,6 +111,157 @@ class PolicyAgent:
             "auth_pathway": auth_pathway,
         }
 
+    def _safe_json_parse(self, text: Any) -> dict:
+        """
+        Robust JSON parser for LLM output.
+
+        Handles:
+        - None responses
+        - markdown code fences
+        - leading/trailing conversational text
+        - trailing commas
+        - basic Python literals
+        - common delimiter issues in long arrays/objects
+        """
+        if text is None:
+            return {"error": "Empty response from model", "raw_text": None}
+
+        if not isinstance(text, (str, bytes, bytearray)):
+            return {
+                "error": f"Unexpected response type: {type(text).__name__}",
+                "raw_text": str(text),
+            }
+
+        if isinstance(text, (bytes, bytearray)):
+            text = text.decode("utf-8", errors="ignore")
+
+        if not text.strip():
+            return {"error": "Empty response from model", "raw_text": text}
+
+        cleaned = text.strip()
+
+        if cleaned.startswith("```"):
+            cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE)
+            cleaned = re.sub(r"\s*```$", "", cleaned)
+
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            pass
+
+        match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+        if match:
+            cleaned = match.group(0)
+
+        repaired = cleaned
+        repaired = repaired.replace("“", '"').replace("”", '"').replace("’", "'")
+        repaired = re.sub(r"\bTrue\b", "true", repaired)
+        repaired = re.sub(r"\bFalse\b", "false", repaired)
+        repaired = re.sub(r"\bNone\b", "null", repaired)
+
+        repaired = re.sub(r",(\s*[}\]])", r"\1", repaired)
+
+        repaired = re.sub(r'(\})(\s*)(\{)', r'\1,\2\3', repaired)
+        repaired = re.sub(r'(\])(\s*)(\{)', r'\1,\2\3', repaired)
+        repaired = re.sub(r'(\})(\s*)(\")', r'\1,\2\3', repaired)
+        repaired = re.sub(r'(\])(\s*)(\")', r'\1,\2\3', repaired)
+
+        try:
+            return json.loads(repaired)
+        except json.JSONDecodeError as e:
+            return {
+                "error": "Failed to parse JSON from model output",
+                "parse_error": str(e),
+                "raw_text": text,
+            }
+
+    async def _call_json_model(
+        self,
+        prompt: str,
+        fallback: dict,
+        max_tokens: int = 2000,
+    ) -> dict:
+        """
+        Safe wrapper around model calls.
+        Always returns a dict, never raises parsing errors upstream.
+        """
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": POLICY_SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt},
+                ],
+                max_tokens=max_tokens,
+            )
+        except Exception as e:
+            result = dict(fallback)
+            result["error"] = f"Model call failed: {e}"
+            return result
+
+        result_text = ""
+        try:
+            result_text = response.choices[0].message.content or ""
+        except (AttributeError, IndexError, TypeError):
+            result_text = ""
+
+        parsed = self._safe_json_parse(result_text)
+
+        if not isinstance(parsed, dict):
+            result = dict(fallback)
+            result["error"] = "Parsed output was not a JSON object"
+            result["raw_text"] = result_text
+            return result
+
+        if parsed.get("error"):
+            result = dict(fallback)
+            result.update({"parse_error": parsed.get("error"), "raw_text": parsed.get("raw_text")})
+            return result
+
+        return parsed
+
+    def _safe_score(self, value: Any) -> float:
+        try:
+            return float(value)
+        except Exception:
+            return 0.0
+
+    def _build_policy_chunks(
+        self,
+        policy_text: str,
+        chunk_size: int = 3500,
+        overlap: int = 400,
+    ) -> List[dict]:
+        """
+        Splits large policy text into overlapping chunks so the model
+        does not get overwhelmed by very long documents.
+        """
+        if not policy_text:
+            return []
+
+        chunks = []
+        start = 0
+        idx = 1
+        text_len = len(policy_text)
+
+        while start < text_len:
+            end = min(start + chunk_size, text_len)
+            chunk_text = policy_text[start:end]
+            chunks.append(
+                {
+                    "chunk_id": f"chunk_{idx}",
+                    "start": start,
+                    "end": end,
+                    "text": chunk_text,
+                }
+            )
+            if end >= text_len:
+                break
+            start = max(end - overlap, start + 1)
+            idx += 1
+
+        return chunks
+
     async def _search_policy(
         self,
         policy_text: str,
@@ -114,8 +269,31 @@ class PolicyAgent:
         search_hints: list[str],
         exception_indicators: list[str],
     ) -> list[dict]:
-        """Search the policy document with clinically-informed parameters."""
-        prompt = f"""Search this insurance policy document for sections relevant to the following clinical case.
+        """
+        Search the policy document with clinically-informed parameters.
+
+        Fixes:
+        - avoids sending the full giant policy at once
+        - uses chunking for token efficiency
+        - uses safe model parsing
+        - always returns a valid list
+        """
+        chunks = self._build_policy_chunks(policy_text)
+        if not chunks:
+            await self.ledger.write(
+                source=AgentSource.POLICY,
+                event_type="POLICY_SEARCH",
+                message="Policy search skipped because the policy document was empty.",
+                data={"sections_found": 0, "exception_clauses": 0},
+                tags=["POLICY_SEARCH", "NO_POLICY_TEXT"],
+                severity=Severity.NORMAL,
+            )
+            return []
+
+        all_sections: List[dict] = []
+
+        for chunk in chunks[:8]:
+            prompt = f"""Search this insurance policy chunk for sections relevant to the following clinical case.
 
 IMPORTANT: The Clinical Agent has identified these specific search priorities:
 {json.dumps(search_hints, indent=2)}
@@ -126,15 +304,16 @@ And these clinical indicators that might trigger policy exceptions:
 CLINICAL CONTEXT FROM SHARED LEDGER:
 {clinical_context}
 
-POLICY DOCUMENT:
-{policy_text}
+POLICY CHUNK ID: {chunk["chunk_id"]}
+POLICY DOCUMENT CHUNK:
+{chunk["text"]}
 
-Find ALL relevant sections. Pay special attention to:
+Find ALL relevant sections in this chunk. Pay special attention to:
 - Exception clauses for the specific condition type
 - Expedited review pathways
 - Medical necessity definitions that match these clinical indicators
 - Multi-morbidity or complex condition provisions
-- Any sections where the clinical indicators meet specific numeric thresholds mentioned in the policy
+- Numeric thresholds mentioned in the policy
 
 Respond with JSON:
 {{
@@ -142,49 +321,66 @@ Respond with JSON:
         {{
             "section_id": "string - section number/identifier",
             "title": "string - section title",
-            "relevant_text": "string - the specific policy text that applies (quote exactly)",
-            "relevance_score": 0.0-1.0,
-            "is_exception_clause": true/false,
-            "match_reason": "string - why this section is relevant to THIS specific case",
-            "clinical_criteria_matched": ["list of specific clinical findings that match this section's requirements"]
+            "relevant_text": "string - the specific policy text that applies",
+            "relevance_score": 0.0,
+            "is_exception_clause": true,
+            "match_reason": "string - why this section is relevant",
+            "clinical_criteria_matched": ["list of clinical findings"],
+            "chunk_id": "{chunk["chunk_id"]}"
         }}
     ],
-    "search_strategy_used": "string - describe how the clinical hints changed your search approach"
+    "search_strategy_used": "string"
 }}"""
 
-        response = await self.client.messages.create(
-            model=self.model,
-            max_tokens=2000,
-            system=POLICY_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": prompt}],
-        )
+            fallback = {
+                "matched_sections": [],
+                "search_strategy_used": "fallback_chunk_scan",
+            }
 
-        result_text = response.content[0].text
-        try:
-            result = json.loads(result_text)
-        except json.JSONDecodeError:
-            import re
-            match = re.search(r'\{.*\}', result_text, re.DOTALL)
-            result = json.loads(match.group()) if match else {"matched_sections": [], "error": "Parse failed"}
+            result = await self._call_json_model(prompt, fallback, max_tokens=1400)
+            sections = result.get("matched_sections", [])
 
-        sections = result.get("matched_sections", [])
-        exception_count = sum(1 for s in sections if s.get("is_exception_clause"))
+            if isinstance(sections, list):
+                for section in sections:
+                    if isinstance(section, dict):
+                        section.setdefault("chunk_id", chunk["chunk_id"])
+                        all_sections.append(section)
+
+        deduped = []
+        seen = set()
+        for section in all_sections:
+            key = (
+                str(section.get("section_id", "")).strip(),
+                str(section.get("title", "")).strip(),
+                str(section.get("relevant_text", "")).strip()[:200],
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(section)
+
+        deduped = sorted(
+            deduped,
+            key=lambda s: self._safe_score(s.get("relevance_score", 0)),
+            reverse=True,
+        )[:12]
+
+        exception_count = sum(1 for s in deduped if s.get("is_exception_clause"))
 
         await self.ledger.write(
             source=AgentSource.POLICY,
             event_type="POLICY_SEARCH",
             message=(
-                f"Policy search complete. Found {len(sections)} relevant section(s), "
+                f"Policy search complete. Found {len(deduped)} relevant section(s), "
                 f"including {exception_count} exception clause(s). "
-                f"Strategy: {result.get('search_strategy_used', 'standard')}."
+                f"Strategy: chunked policy search guided by clinical hints."
             ),
-            data={"sections_found": len(sections), "exception_clauses": exception_count},
+            data={"sections_found": len(deduped), "exception_clauses": exception_count},
             tags=["POLICY_SEARCH", "SECTIONS_FOUND"],
             severity=Severity.HIGH if exception_count > 0 else Severity.NORMAL,
         )
 
-        # Write individual section matches
-        for section in sorted(sections, key=lambda s: s.get("relevance_score", 0), reverse=True)[:3]:
+        for section in deduped[:3]:
             tag_list = ["SECTION_MATCH"]
             if section.get("is_exception_clause"):
                 tag_list.append("EXCEPTION_CLAUSE")
@@ -194,19 +390,20 @@ Respond with JSON:
                 event_type="SECTION_MATCH",
                 message=(
                     f"§{section.get('section_id', '?')} — {section.get('title', 'Untitled')}: "
-                    f"{section.get('match_reason', '')}"
+                    f"{section.get('match_reason', 'Relevant policy section identified')}"
                 ),
                 data={
                     "section_id": section.get("section_id"),
                     "relevance_score": section.get("relevance_score"),
                     "is_exception": section.get("is_exception_clause"),
-                    "text_preview": section.get("relevant_text", "")[:200],
+                    "chunk_id": section.get("chunk_id"),
+                    "text_preview": str(section.get("relevant_text", ""))[:200],
                 },
                 tags=tag_list,
                 severity=Severity.CRITICAL if section.get("is_exception_clause") else Severity.NORMAL,
             )
 
-        return sections
+        return deduped
 
     async def _analyze_exceptions(
         self,
@@ -215,14 +412,32 @@ Respond with JSON:
         matched_sections: list[dict],
         exception_indicators: list[str],
     ) -> dict:
-        """Deep-dive into exception clauses to see if clinical criteria are met."""
-        exception_sections = [s for s in matched_sections if s.get("is_exception_clause")]
+        """
+        Deep-dive into exception clauses.
+
+        Fix:
+        - no more blind policy_text[:5000]
+        - only passes relevant_text from matched exception sections
+        """
+        exception_sections = [
+            s for s in matched_sections
+            if isinstance(s, dict) and s.get("is_exception_clause")
+        ]
 
         if not exception_sections:
             return {
                 "applicable_exceptions": [],
+                "best_exception_pathway": "None",
                 "recommendation": "No exception clauses found; standard authorization pathway applies.",
             }
+
+        focused_policy_text = "\n\n".join(
+            [
+                f"SECTION {s.get('section_id', '?')} — {s.get('title', 'Untitled')}\n"
+                f"{s.get('relevant_text', '')}"
+                for s in exception_sections
+            ]
+        )
 
         prompt = f"""Perform a detailed analysis of whether this patient qualifies for the exception clauses found.
 
@@ -235,8 +450,8 @@ CLINICAL EXCEPTION INDICATORS:
 EXCEPTION CLAUSES FOUND:
 {json.dumps(exception_sections, indent=2)}
 
-FULL POLICY TEXT (for cross-referencing):
-{policy_text[:5000]}
+RELEVANT POLICY TEXT ONLY:
+{focused_policy_text}
 
 For each exception clause, determine:
 1. Does the patient meet ALL required criteria?
@@ -249,38 +464,44 @@ Respond with JSON:
         {{
             "section_id": "string",
             "title": "string",
-            "all_criteria_met": true/false,
+            "all_criteria_met": true,
             "criteria_evaluation": [
                 {{
-                    "criterion": "string - what the policy requires",
-                    "met": true/false,
-                    "evidence": "string - specific clinical evidence that satisfies this"
+                    "criterion": "string",
+                    "met": true,
+                    "evidence": "string"
                 }}
             ],
             "missing_documentation": ["list of anything still needed"],
-            "confidence": 0.0-1.0
+            "confidence": 0.0
         }}
     ],
-    "best_exception_pathway": "string - which exception clause is the strongest match",
-    "recommendation": "string - overall recommendation"
+    "best_exception_pathway": "string",
+    "recommendation": "string"
 }}"""
 
-        response = await self.client.messages.create(
-            model=self.model,
-            max_tokens=2000,
-            system=POLICY_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": prompt}],
+        fallback = {
+            "applicable_exceptions": [],
+            "best_exception_pathway": "Pending Manual Review",
+            "recommendation": "Unable to reliably evaluate exception clauses; manual review recommended.",
+        }
+
+        result = await self._call_json_model(prompt, fallback, max_tokens=1600)
+
+        result.setdefault("applicable_exceptions", [])
+        result.setdefault("best_exception_pathway", "Pending Manual Review")
+        result.setdefault(
+            "recommendation",
+            "Unable to reliably evaluate exception clauses; manual review recommended.",
         )
 
-        result_text = response.content[0].text
-        try:
-            result = json.loads(result_text)
-        except json.JSONDecodeError:
-            import re
-            match = re.search(r'\{.*\}', result_text, re.DOTALL)
-            result = json.loads(match.group()) if match else {"applicable_exceptions": []}
+        if not isinstance(result["applicable_exceptions"], list):
+            result["applicable_exceptions"] = []
 
-        qualifying = [e for e in result.get("applicable_exceptions", []) if e.get("all_criteria_met")]
+        qualifying = [
+            e for e in result["applicable_exceptions"]
+            if isinstance(e, dict) and e.get("all_criteria_met")
+        ]
 
         await self.ledger.write(
             source=AgentSource.POLICY,
@@ -288,7 +509,7 @@ Respond with JSON:
             message=(
                 f"Exception analysis: {len(qualifying)} of {len(result.get('applicable_exceptions', []))} "
                 f"exception clause(s) fully satisfied. "
-                f"Best pathway: {result.get('best_exception_pathway', 'None')}."
+                f"Best pathway: {result.get('best_exception_pathway', 'Pending Manual Review')}."
             ),
             data={
                 "qualifying_exceptions": len(qualifying),
@@ -306,7 +527,13 @@ Respond with JSON:
         matched_sections: list[dict],
         exception_analysis: dict,
     ) -> dict:
-        """Determine the final authorization pathway."""
+        """
+        Determine the final authorization pathway.
+
+        Fix:
+        - safe parsing
+        - default fallback object instead of red-screen failure
+        """
         prompt = f"""Based on the complete analysis, determine the authorization pathway.
 
 CLINICAL CONTEXT:
@@ -320,49 +547,66 @@ EXCEPTION ANALYSIS:
 
 Respond with JSON:
 {{
-    "recommended_pathway": "string - the specific policy pathway (e.g., 'Autoimmune Exception §7.3')",
-    "expected_status": "AUTO_APPROVED | EXPEDITED_REVIEW | STANDARD_REVIEW | LIKELY_DENIED",
-    "estimated_processing_time": "string - e.g., 'Instant', '24-48 hours', '5-7 business days'",
-    "confidence_score": 0.0-1.0,
-    "reasoning": "string - 2-3 sentence explanation of why this pathway applies",
+    "recommended_pathway": "string",
+    "expected_status": "AUTO_APPROVED | EXPEDITED_REVIEW | STANDARD_REVIEW | LIKELY_DENIED | PENDING_MANUAL_REVIEW",
+    "estimated_processing_time": "string",
+    "confidence_score": 0.0,
+    "reasoning": "string",
     "documentation_checklist": [
         {{
-            "item": "string - what document/information is needed",
+            "item": "string",
             "status": "AVAILABLE | NEEDED | OPTIONAL",
-            "source": "string - where to get it (EHR, physician, lab)"
+            "source": "string"
         }}
     ],
-    "admin_cost_savings_estimate": "string - estimated admin savings vs manual process",
+    "admin_cost_savings_estimate": "string",
     "appeal_risk": "LOW | MEDIUM | HIGH",
     "alternative_pathways": ["list of backup pathways if primary is rejected"]
 }}"""
 
-        response = await self.client.messages.create(
-            model=self.model,
-            max_tokens=1500,
-            system=POLICY_SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": prompt}],
-        )
+        fallback = {
+            "recommended_pathway": "Pending Manual Review",
+            "expected_status": "PENDING_MANUAL_REVIEW",
+            "estimated_processing_time": "Unknown",
+            "confidence_score": 0.0,
+            "reasoning": "Model output was unavailable or malformed, so manual review is required.",
+            "documentation_checklist": [],
+            "admin_cost_savings_estimate": "Unknown",
+            "appeal_risk": "MEDIUM",
+            "alternative_pathways": ["STANDARD_REVIEW"],
+        }
 
-        result_text = response.content[0].text
-        try:
-            result = json.loads(result_text)
-        except json.JSONDecodeError:
-            import re
-            match = re.search(r'\{.*\}', result_text, re.DOTALL)
-            result = json.loads(match.group()) if match else {"error": "Parse failed"}
+        result = await self._call_json_model(prompt, fallback, max_tokens=1400)
+
+        result.setdefault("recommended_pathway", "Pending Manual Review")
+        result.setdefault("expected_status", "PENDING_MANUAL_REVIEW")
+        result.setdefault("estimated_processing_time", "Unknown")
+        result.setdefault("confidence_score", 0.0)
+        result.setdefault(
+            "reasoning",
+            "Model output was unavailable or malformed, so manual review is required.",
+        )
+        result.setdefault("documentation_checklist", [])
+        result.setdefault("admin_cost_savings_estimate", "Unknown")
+        result.setdefault("appeal_risk", "MEDIUM")
+        result.setdefault("alternative_pathways", ["STANDARD_REVIEW"])
+
+        if not isinstance(result["documentation_checklist"], list):
+            result["documentation_checklist"] = []
+        if not isinstance(result["alternative_pathways"], list):
+            result["alternative_pathways"] = ["STANDARD_REVIEW"]
 
         await self.ledger.write(
             source=AgentSource.POLICY,
             event_type="PATHWAY_DETERMINATION",
             message=(
-                f"Authorization pathway determined: {result.get('recommended_pathway', 'UNKNOWN')}. "
-                f"Expected status: {result.get('expected_status', 'UNKNOWN')}. "
+                f"Authorization pathway determined: {result.get('recommended_pathway', 'Pending Manual Review')}. "
+                f"Expected status: {result.get('expected_status', 'PENDING_MANUAL_REVIEW')}. "
                 f"Processing time: {result.get('estimated_processing_time', 'Unknown')}. "
-                f"Confidence: {result.get('confidence_score', 0):.0%}."
+                f"Confidence: {self._safe_score(result.get('confidence_score', 0)):.0%}."
             ),
             data=result,
-            tags=["PATHWAY", result.get("expected_status", "UNKNOWN")],
+            tags=["PATHWAY", result.get("expected_status", "PENDING_MANUAL_REVIEW")],
             severity=Severity.CRITICAL,
         )
 

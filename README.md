@@ -68,7 +68,7 @@ Open **http://localhost:8000** in your browser.
 
 ---
 
-## 🎮 Demo Script (for judges)
+## 🎮 Demo Script (for testing)
 
 ### Scenario 1: Lupus (Autoimmune Exception)
 > "Maria Chen has SLE with suspected lupus nephritis. Watch the Clinical Agent extract her abnormal labs — ANA 1:640, low complement, proteinuria — and write them to the shared ledger. Now the Policy Agent reads the ledger and SHIFTS its search from standard imaging rules to Section 7.3 — the Autoimmune Disease Diagnostic Exception. It finds that all four qualifying criteria are met. Result: **AUTO-APPROVED instantly**, bypassing the standard 5-7 day review. That's the shared memory in action."

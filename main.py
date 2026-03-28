@@ -25,7 +25,8 @@ from memory.ledger import MedicalNecessityLedger
 
 
 # ── Config ──────────────────────────────────────────────────────────
-API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+# Updated to use OpenRouter API key environment variable   
+API_KEY = os.environ.get("OPENROUTER_API_KEY", "")    
 DATA_DIR = Path(__file__).parent / "data"
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -33,11 +34,11 @@ STATIC_DIR = Path(__file__).parent / "static"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if not API_KEY:
-        print("\n⚠️  WARNING: ANTHROPIC_API_KEY not set!")
-        print("   Set it with: export ANTHROPIC_API_KEY=sk-ant-...")
+        print("\n⚠️  WARNING: OPENROUTER_API_KEY not set!")
+        print("   Set it with: export OPENROUTER_API_KEY=your_key_here")
         print("   The app will still start but API calls will fail.\n")
     else:
-        print("\n✅ ANTHROPIC_API_KEY detected. Agents are ready.\n")
+        print("\n✅ OPENROUTER_API_KEY detected. Agents are ready.\n")
     yield
 
 
@@ -62,13 +63,17 @@ def load_sample_ehr(name: str) -> dict:
     path = DATA_DIR / f"ehr_{name}.json"
     if not path.exists():
         raise HTTPException(404, f"Sample EHR '{name}' not found")
-    with open(path) as f:
+    # Added encoding="utf-8" to prevent UnicodeDecodeError on Windows
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
 def load_policy() -> str:
     path = DATA_DIR / "sample_policy.txt"
-    with open(path) as f:
+    if not path.exists():
+        return "Policy document not found."
+    # Added encoding="utf-8" to correctly read symbols like '§'
+    with open(path, encoding="utf-8") as f:
         return f.read()
 
 
@@ -77,15 +82,22 @@ def load_policy() -> str:
 async def list_samples():
     """List available sample EHR scenarios."""
     samples = []
+    if not DATA_DIR.exists():
+        return {"samples": [], "policy_available": False}
+
     for p in sorted(DATA_DIR.glob("ehr_*.json")):
-        with open(p) as f:
-            data = json.load(f)
-        samples.append({
-            "id": p.stem.replace("ehr_", ""),
-            "patient_name": data["patient_name"],
-            "chief_complaint": data["chief_complaint"],
-            "diagnosis_codes": data.get("diagnosis_codes", []),
-        })
+        try:
+            with open(p, encoding="utf-8") as f:
+                data = json.load(f)
+            samples.append({
+                "id": p.stem.replace("ehr_", ""),
+                "patient_name": data["patient_name"],
+                "chief_complaint": data["chief_complaint"],
+                "diagnosis_codes": data.get("diagnosis_codes", []),
+            })
+        except Exception as e:
+            print(f"Error loading sample {p}: {e}")
+
     return {"samples": samples, "policy_available": (DATA_DIR / "sample_policy.txt").exists()}
 
 
@@ -107,15 +119,9 @@ async def get_policy():
 async def process_claim_stream(request: ClaimRequest):
     """
     Process a claim and stream results via SSE.
-    
-    This is the main endpoint. It:
-    1. Starts the Clinical Agent
-    2. Streams all ledger events as SSE
-    3. The Policy Agent reads the ledger and adapts
-    4. Returns final determination
     """
     if not API_KEY:
-        raise HTTPException(500, "ANTHROPIC_API_KEY not configured")
+        raise HTTPException(500, "OPENROUTER_API_KEY not configured")
 
     coordinator = ClaimsCoordinator(api_key=API_KEY)
 
@@ -205,7 +211,7 @@ async def process_claim_stream(request: ClaimRequest):
 async def process_claim_sync(request: ClaimRequest):
     """Synchronous version — processes and returns complete result."""
     if not API_KEY:
-        raise HTTPException(500, "ANTHROPIC_API_KEY not configured")
+        raise HTTPException(500, "OPENROUTER_API_KEY not configured")
 
     coordinator = ClaimsCoordinator(api_key=API_KEY)
     try:
@@ -225,7 +231,10 @@ async def serve_frontend():
     index_path = STATIC_DIR / "index.html"
     if not index_path.exists():
         return HTMLResponse("<h1>Frontend not found. Ensure static/index.html exists.</h1>")
-    with open(index_path) as f:
+    
+    # FIX: Added encoding="utf-8" to fix UnicodeDecodeError
+    # This ensures characters like the medical symbol (⚕) are read correctly.
+    with open(index_path, encoding="utf-8") as f:
         return HTMLResponse(f.read())
 
 
